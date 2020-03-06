@@ -1,7 +1,8 @@
 import numpy as np
 from your_code import HingeLoss, SquaredLoss
 from your_code import L1Regularization, L2Regularization
-
+#from your_code import accuracy, metrics
+from .metrics import accuracy
 
 class GradientDescent:
     """
@@ -83,33 +84,68 @@ class GradientDescent:
                 d+1. The +1 refers to the bias term.
         """
         N,d = features.shape
+        
         w = np.zeros((d+1))
         for i in range(d+1):
             w[i] = np.random.uniform(-0.1,0.1)
-
+        """
+        w = np.zeros((d))
+        for i in range(d):
+            w[i] = np.random.uniform(-0.1,0.1)
+        w = np.append(w,0.5)
+        """
         bias = np.ones((N,1))
-        features = np.append(features,bias,1)
+        features_new = np.append(features,bias,1)
 
         converged = 0
         count = 0
         loss_init = 0
+        self.loss_array = []
+        self.accuracy = []
+        min_batch = 0
+        max_batch = batch_size
         while count <= max_iter and converged == 0:
-            gradient = self.loss.backward(features,w,targets)
-            loss_new = self.loss.forward(features, w, targets)
-            loss_diff = loss_new - loss_init
-            loss_abs = np.absolute(loss_diff)
+            if batch_size is None:
+                gradient = self.loss.backward(features_new,w,targets)
+                loss_new = self.loss.forward(features_new, w, targets)
+                loss_diff = loss_new - loss_init
+                loss_abs = np.absolute(loss_diff)
+                self.loss_array.append(loss_new)
 
-            if loss_abs < 0.0001:
-                converged = 1
+                if loss_abs < 0.0001:
+                    converged = 1
 
+                else:
+                    step = self.learning_rate*gradient
+                    conv = w - step
+                    w = conv
+                count = count + 1
+                loss_init = loss_new
+            
+                self.model = w  
+                curr_predict = self.predict(features) 
+                acc = accuracy(targets,curr_predict)
+                self.accuracy.append(acc)
             else:
+                np.random.shuffle(features_new)
+                batch_features = features_new[min_batch:max_batch]
+                gradient = self.loss.backward(batch_features,w,targets)
+                loss_new = self.loss.forward(batch_features, w, targets)
+                self.loss_epoch = loss_new
                 step = self.learning_rate*gradient
                 conv = w - step
                 w = conv
-            count = count + 1
-            loss_init = loss_new
-        
-        self.model = w    
+                count = count + batch_size
+                self.model = w  
+                curr_predict = self.predict(features) 
+                acc = accuracy(targets,curr_predict)
+                self.accuracy_epoch = acc
+                min_batch = min_batch + batch_size
+                max_batch = max_batch + batch_size
+                if max_batch >= N:
+                    count = max_iter + 1
+                
+
 
 
     def predict(self, features):
