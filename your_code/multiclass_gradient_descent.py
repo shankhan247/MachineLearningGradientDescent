@@ -53,7 +53,19 @@ class MultiClassGradientDescent:
                 values. Required to associate a model index with a target value
                 in predict.
         """
-        raise NotImplementedError()
+        self.classes = np.unique(targets)
+        N = len(targets)
+        target_binary = np.zeros((N))
+        for l in self.classes:
+            for n in range(N):
+                if targets[n] == l:
+                    target_binary[n] = 1
+                else:
+                    target_binary[n] = -1
+            learn = GradientDescent(self.loss,self.regularization,self.learning_rate,self.reg_param)
+            learn.fit(features,target_binary,batch_size,max_iter)
+            self.model.append(learn.model)
+
 
     def predict(self, features):
         """
@@ -71,4 +83,21 @@ class MultiClassGradientDescent:
                 where index d corresponds to the prediction of row N of
                 features.
         """
-        raise NotImplementedError()
+        N,d = features.shape
+        num_class = len(self.classes)
+        h_vals = np.zeros(num_class)
+
+        bias = np.ones((N,1))
+        features = np.append(features,bias,1)
+        predictions = np.zeros((N))
+
+        for i in range(N):
+            for c in range(num_class):
+                h = np.dot(self.model[c],features[i])
+                h_vals[c] = h
+            max_index = np.argmax(h_vals)
+            predictions[i] = self.classes[max_index]
+        
+        return predictions
+            
+

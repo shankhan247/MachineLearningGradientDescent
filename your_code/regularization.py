@@ -67,7 +67,14 @@ class L1Regularization(Regularization):
             regularization_term - (float) The value of the regularization term
                 evaluated at w.
         """
-        raise NotImplementedError()
+        l = len(w)
+        regularization_term = 0
+        for i in range(l-1):
+            a = np.absolute(w[i]) * self.reg_param
+            regularization_term = regularization_term + a
+
+        return regularization_term
+
 
     def backward(self, w):
         """
@@ -83,8 +90,13 @@ class L1Regularization(Regularization):
             gradient_term - (np.array) A numpy array of length d+1. The
                 gradient of the regularization term evaluated at w.
         """
-        raise NotImplementedError()
-
+        l = len(w)
+        gradient_term = np.zeros((l))
+        for i in range(l-1):
+            d = (w[i]/np.absolute(w[i])) * self.reg_param
+            gradient_term[i] = d
+        return gradient_term
+        
 
 class L2Regularization(Regularization):
     """
@@ -106,7 +118,13 @@ class L2Regularization(Regularization):
             regularization_term - (float) The value of the regularization term
                 evaluated at w.
         """
-        raise NotImplementedError()
+        l = len(w)
+        regularization_term = 0
+        for i in range(l-1):
+            a = (np.absolute(w[i])**2) * self.reg_param
+            regularization_term = regularization_term + a
+        regularization_term = regularization_term * 0.5
+        return regularization_term
 
     def backward(self, w):
         """
@@ -122,4 +140,9 @@ class L2Regularization(Regularization):
             gradient_term - (np.array) A numpy array of length d+1. The
                 gradient of the regularization term evaluated at w.
         """
-        raise NotImplementedError()
+        l = len(w)
+        gradient_term = np.zeros((l))
+        for i in range(l-1):
+            d = (w[i]/np.absolute(w[i])) * np.absolute(w[i]) * self.reg_param
+            gradient_term[i] = d
+        return gradient_term

@@ -93,7 +93,17 @@ class SquaredLoss(Loss):
             loss - (float) The calculated loss normalized by the number of
                 examples, N.
         """
-        raise NotImplementedError()
+        row, col = X.shape
+        loss = 0
+        for i in range(row):
+            loss_val = (y[i] - np.dot(w,X[i]))**2
+            loss = loss + loss_val
+        if self.regularization is not None:
+            r = self.regularization.forward(w)
+            loss = (loss * 1/(2*row))+r
+        else:
+            loss = loss * 1/(2*row)
+        return loss
 
     def backward(self, X, w, y):
         """
@@ -114,7 +124,18 @@ class SquaredLoss(Loss):
                 function with respect to the model parameters. The +1 refers to
                 the bias term.
         """
-        raise NotImplementedError()
+        row, col = X.shape
+        gradient = np.zeros((col))
+        for i in range(row):
+            loss_val = (y[i] - np.dot(w,X[i]))*X[i]
+            gradient = gradient + loss_val
+        if self.regularization is not None:
+            r = self.regularization.backward(w)
+            gradient = (gradient * (-1/row)) + r
+        else:
+            gradient = gradient * (-1/row)
+        return gradient
+
 
 
 class HingeLoss(Loss):
@@ -148,7 +169,18 @@ class HingeLoss(Loss):
             loss - (float) The calculated loss normalized by the number of
                 examples, N.
         """
-        raise NotImplementedError()
+        row, col = X.shape
+        loss = 0
+        for i in range(row):
+            loss_val = 1 - y[i]*np.dot(w,X[i])
+            m = max(0,loss_val)
+            loss = loss + m
+        if self.regularization is not None:
+            r = self.regularization.forward(w)
+            loss = (loss * (1/row))+r
+        else:
+            loss = loss * (1/row)
+        return loss
 
     def backward(self, X, w, y):
         """
@@ -169,7 +201,21 @@ class HingeLoss(Loss):
                 function with respect to the model parameters. The +1 refers to
                 the bias term.
         """
-        raise NotImplementedError()
+        row, col = X.shape
+        gradient = np.zeros((col))
+        for i in range(row):
+            loss_val = 1 - y[i]*np.dot(w,X[i])
+            if loss_val > 0:
+                new_val = -1*y[i]*X[i]
+                gradient = gradient + new_val
+        
+        if self.regularization is not None:
+            r = self.regularization.backward(w)
+            gradient = (gradient * (1/row)) + r
+        else:
+            gradient = gradient * (1/row)
+
+        return gradient
 
 
 class ZeroOneLoss(Loss):
